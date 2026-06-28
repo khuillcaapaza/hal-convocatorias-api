@@ -1,0 +1,11 @@
+RewriteEngine On
+
+# Pasar la cabecera Authorization: Bearer a PHP (necesaria para JWT)
+RewriteRule .* - [env=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Si el archivo o directorio existe, servirlo tal cual
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# En caso contrario, enrutar todo hacia el front controller
+RewriteRule ^ index.php [QSA,L]

@@ -1,0 +1,80 @@
+name: Deploy API (hal-convocatorias-api)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-convocatorias-api
+  cancel-in-progress: false
+
+env:
+  # TODO: crear el subdominio en HestiaCP y ajustar estos valores reales
+  # Ruta del dominio relativa al home (acceso SFTP-only)
+  REMOTE_DOMAIN_DIR: web/convocatorias.hospitalantoniolorena.gob.pe
+  BASE_URL: https://convocatorias.hospitalantoniolorena.gob.pe
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          tools: composer:v2
+          extensions: pdo, pdo_mysql, mbstring, zip
+
+      - name: Instalar dependencias (producción)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: Preparar artefacto (zip + extractor)
+        run: |
+          set -euo pipefail
+          mkdir -p stage/api
+          cp -r src public vendor composer.json composer.lock sql scripts stage/api/
+          ( cd stage/api && zip -qr "$GITHUB_WORKSPACE/payload.zip" . )
+          TOKEN="$(openssl rand -hex 16)"
+          echo "::add-mask::$TOKEN"
+          echo "UNPACK_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+          sed "s/__UNPACK_TOKEN__/$TOKEN/" deploy/unpack.php > unpack.php
+          ls -l payload.zip unpack.php
+
+      - name: Configurar clave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+
+      - name: Subir artefacto por SFTP
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          sftp -i "$HOME/.ssh/id_deploy" -P "$DEPLOY_PORT" \
+            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            -b - "$DEPLOY_USER@$DEPLOY_HOST" <<EOF
+          -mkdir $REMOTE_DOMAIN_DIR/private
+          -mkdir $REMOTE_DOMAIN_DIR/private/api
+          -mkdir $REMOTE_DOMAIN_DIR/public_html
+          -mkdir $REMOTE_DOMAIN_DIR/public_html/api
+          put payload.zip $REMOTE_DOMAIN_DIR/public_html/api/payload.zip
+          put unpack.php $REMOTE_DOMAIN_DIR/public_html/api/unpack.php
+          put deploy/public_html-api/index.php $REMOTE_DOMAIN_DIR/public_html/api/index.php
+          put deploy/public_html-api/.htaccess $REMOTE_DOMAIN_DIR/public_html/api/.htaccess
+          EOF
+
+      - name: Extraer en el servidor (PHP) y verificar
+        run: |
+          set -euo pipefail
+          echo "Extrayendo payload..."
+          curl -k -fsS "$BASE_URL/api/unpack.php?token=$UNPACK_TOKEN"
+          echo "Comprobando /api/health..."
+          curl -k -fsS "$BASE_URL/api/health"
+          echo

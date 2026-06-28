@@ -1,0 +1,16 @@
+# Dependencias de Composer
+/vendor/
+
+# Secretos: nunca versionar
+.env
+
+# Logs y temporales
+*.log
+.DS_Store
+Thumbs.db
+
+# Artefactos de despliegue generados (CI)
+/payload.zip
+/vendor.zip
+/unpack.php
+/stage/
