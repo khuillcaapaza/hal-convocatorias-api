@@ -1,5 +1,5 @@
 -- Esquema de autenticación para el servicio de convocatorias (hal-convocatorias-api)
--- Ejecutar en MySQL/MariaDB. En HestiaCP usar la BD ya creada (p. ej. haladminweb_convocatorias)
+-- Ejecutar en MySQL/MariaDB. En HestiaCP usar la BD ya creada (haladminweb_convocatorias_bd)
 -- y omitir las dos primeras líneas (CREATE DATABASE / USE).
 
 CREATE DATABASE IF NOT EXISTS hal_convocatorias
