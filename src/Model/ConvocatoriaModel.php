@@ -29,9 +29,10 @@ final class ConvocatoriaModel
     public function publicados(): array
     {
         $rows = $this->pdo->query(
-            'SELECT slug, titulo, area, fecha_publicacion, estado, descripcion, publicado
-               FROM convocatorias WHERE publicado = 1
-              ORDER BY fecha_publicacion DESC, id DESC'
+            'SELECT c.slug, c.titulo, c.area, c.fecha_publicacion, c.estado, c.descripcion, c.publicado,
+                    (SELECT COUNT(*) FROM convocatoria_archivos a WHERE a.convocatoria_id = c.id) AS archivos
+               FROM convocatorias c WHERE c.publicado = 1
+              ORDER BY c.fecha_publicacion DESC, c.id DESC'
         )->fetchAll();
 
         return array_map([$this, 'mapMeta'], $rows);
@@ -41,11 +42,84 @@ final class ConvocatoriaModel
     public function todosMeta(): array
     {
         $rows = $this->pdo->query(
-            'SELECT slug, titulo, area, fecha_publicacion, estado, descripcion, publicado
-               FROM convocatorias ORDER BY fecha_publicacion DESC, id DESC'
+            'SELECT c.slug, c.titulo, c.area, c.fecha_publicacion, c.estado, c.descripcion, c.publicado,
+                    (SELECT COUNT(*) FROM convocatoria_archivos a WHERE a.convocatoria_id = c.id) AS archivos
+               FROM convocatorias c ORDER BY c.fecha_publicacion DESC, c.id DESC'
         )->fetchAll();
 
         return array_map([$this, 'mapMeta'], $rows);
+    }
+
+    /**
+     * Metadatos de convocatorias publicadas con búsqueda y paginación.
+     *
+     * Filtros admitidos: q (texto en título/área/descripción), area, year, month.
+     * Devuelve ['items', 'total', 'page', 'per_page', 'total_pages'].
+     */
+    public function publicadosBuscar(array $f): array
+    {
+        $where  = ['c.publicado = 1'];
+        $params = [];
+
+        $q = trim((string) ($f['q'] ?? ''));
+        if ($q !== '') {
+            $where[]      = "(CONCAT(c.titulo, ' ', c.area, ' ', c.descripcion) LIKE :q)";
+            $params[':q'] = '%' . $q . '%';
+        }
+        $area = trim((string) ($f['area'] ?? ''));
+        if ($area !== '') {
+            $where[]         = 'c.area = :area';
+            $params[':area'] = $area;
+        }
+        $year = (int) ($f['year'] ?? 0);
+        if ($year > 0) {
+            $where[]         = 'YEAR(c.fecha_publicacion) = :year';
+            $params[':year'] = $year;
+        }
+        $month = (int) ($f['month'] ?? 0);
+        if ($month >= 1 && $month <= 12) {
+            $where[]          = 'MONTH(c.fecha_publicacion) = :month';
+            $params[':month'] = $month;
+        }
+        $whereSql = implode(' AND ', $where);
+
+        $stmtTotal = $this->pdo->prepare("SELECT COUNT(*) FROM convocatorias c WHERE {$whereSql}");
+        $stmtTotal->execute($params);
+        $total = (int) $stmtTotal->fetchColumn();
+
+        $perPage    = max(1, min(100, (int) ($f['per_page'] ?? 12)));
+        $totalPages = (int) max(1, (int) ceil($total / $perPage));
+        $page       = max(1, min($totalPages, (int) ($f['page'] ?? 1)));
+        $offset     = ($page - 1) * $perPage;
+
+        $stmt = $this->pdo->prepare(
+            "SELECT c.slug, c.titulo, c.area, c.fecha_publicacion, c.estado, c.descripcion, c.publicado,
+                    (SELECT COUNT(*) FROM convocatoria_archivos a WHERE a.convocatoria_id = c.id) AS archivos
+               FROM convocatorias c WHERE {$whereSql}
+              ORDER BY c.fecha_publicacion DESC, c.id DESC
+              LIMIT {$perPage} OFFSET {$offset}"
+        );
+        $stmt->execute($params);
+
+        return [
+            'items'       => array_map([$this, 'mapMeta'], $stmt->fetchAll()),
+            'total'       => $total,
+            'page'        => $page,
+            'per_page'    => $perPage,
+            'total_pages' => $totalPages,
+        ];
+    }
+
+    /** Años (distintos) de las convocatorias publicadas, de mayor a menor. */
+    public function aniosPublicados(): array
+    {
+        $rows = $this->pdo->query(
+            'SELECT DISTINCT YEAR(fecha_publicacion) AS y
+               FROM convocatorias WHERE publicado = 1
+              ORDER BY y DESC'
+        )->fetchAll();
+
+        return array_map(static fn (array $r): int => (int) $r['y'], $rows);
     }
 
     /** Una convocatoria publicada completa (con archivos) por slug, o null. */
@@ -200,6 +274,7 @@ final class ConvocatoriaModel
             'status'      => $row['estado'],
             'description' => $row['descripcion'],
             'publicado'   => (int) $row['publicado'] === 1,
+            'archivos'    => (int) ($row['archivos'] ?? 0),
         ];
     }
 }

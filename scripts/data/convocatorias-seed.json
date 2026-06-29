@@ -1,0 +1,286 @@
+{
+  "_comment": "Snapshot de migración de las 16 convocatorias históricas del sitio estático hacia la BD. Consumido por scripts/seed-convocatorias.php. estado='Cerrada' (procesos concluidos). Los nombres de archivo coinciden con los PDFs/imágenes ya publicados.",
+  "convocatorias": [
+    {
+      "slug": "reemplazo-suplencia-01-2026",
+      "titulo": "Contratación por Reemplazo y Suplencia N° 01-2026 (D.L. 276)",
+      "area": "Reemplazo",
+      "fecha_publicacion": "2026-02-24",
+      "estado": "Cerrada",
+      "descripcion": "Proceso de contratación temporal de personal por reemplazo y suplencia bajo el régimen del Decreto Legislativo N° 276.",
+      "files": [
+        "Comunicado-04.pdf",
+        "Comunicado-2.pdf",
+        "Comunicado-3.pdf",
+        "COMUNICADO-7-PDF.pdf",
+        "COMUNICADO-8-J.pdf",
+        "Comunicado1-1.pdf",
+        "comunicados-concurso-276-COMUNICADO-6 (1).pdf",
+        "comunicados-concurso-276-COMUNICADO-6.pdf",
+        "CRONOGRAMA-DE-LA-ENTREVISTA.pdf",
+        "DL-276-Bases-01-2026.pdf",
+        "GANADORES-Y-ELEGIBLES-TOTAL.pdf",
+        "ilovepdf_merged.pdf",
+        "PROCESO-NRO-1-SUPLENCIA-2026.pdf",
+        "RESPUESTAS-RECONSIDERACION-REEMPLAZO-1-2026.pdf",
+        "Resultado-Final-CAS-001-2026-1.pdf",
+        "SKM_36726022412220 (1).pdf",
+        "SKM_36726022412220.pdf"
+      ]
+    },
+    {
+      "slug": "cas-001-2026",
+      "titulo": "Proceso CAS N° 001-2026",
+      "area": "CAS",
+      "fecha_publicacion": "2026-01-15",
+      "estado": "Cerrada",
+      "descripcion": "Convocatoria del Proceso de Contratación Administrativa de Servicios (CAS) N° 001-2026 del Hospital Antonio Lorena.",
+      "files": [
+        "Bases-CAS-01-2026.pdf",
+        "Comunicado-1.pdf",
+        "Comunicado-2-1 (1).pdf",
+        "Comunicado-2-1.pdf",
+        "Comunicado-3.pdf",
+        "Comunicado-4.pdf",
+        "Comunicado-5.pdf",
+        "Resultado-Final-CAS-001-2026-2.pdf",
+        "Resultados-aptos-y-no-aptosComunicado-4.pdf",
+        "Resultados-Convocatoria-CAS-001-2026.pdf"
+      ]
+    },
+    {
+      "slug": "cas-004-2025",
+      "titulo": "Convocatoria CAS N° 004-2025",
+      "area": "CAS",
+      "fecha_publicacion": "2025-11-01",
+      "estado": "Cerrada",
+      "descripcion": "Proceso de Contratación Administrativa de Servicios (CAS) N° 004-2025, con bases, comunicados, fe de erratas y resultados.",
+      "files": [
+        "Bases-Concurso-y-Perfiles-CAS-005-2025.pdf",
+        "Bases-y-Perfil-de-Puesto-CAS-004-2025-OK.pdf",
+        "COMUNICADO-002-CAS-004-2025-Lev-OBS.pdf",
+        "COMUNICADO-004-CAS-004-2025.pdf",
+        "COMUNICADO-005-CAS-004-2025.pdf",
+        "COMUNICADO-Nro-01-CAS-004-2025.pdf",
+        "COMUNICADO-NRO-7.pdf",
+        "Comunicado-Nro.-003.pdf",
+        "Declaracion-Jurada-OCI_.pdf",
+        "Fe-de-Erratas-003.pdf",
+        "Fe-de-Erratas-01-DL-1057-004-2025.pdf",
+        "Fe-de-Erratas-02-DL-1057-004-2025.pdf",
+        "FORMATOS-DE-REQUISITOS-Y-DATOS-PERSONALES-PARA-EL-AREA-DE-REMUENRACIONES.pdf",
+        "LISTA-DE-APTOS-Y-NO-APTOS-29-11-2025.pdf",
+        "Lista-de-Aptos-y-No-Aptos-Cas-004-2025.pdf",
+        "RESULTADO-FINAL-CONVOCATORIA-CAS-004-2025.pdf",
+        "RESULTADOS-DE-RECONSIDERACION-CAS-004-2025.pdf",
+        "SKM_36725111316310.pdf"
+      ]
+    },
+    {
+      "slug": "lineamientos-ascenso-2025",
+      "titulo": "Lineamientos del Proceso de Ascenso 2025",
+      "area": "Ascenso",
+      "fecha_publicacion": "2025-10-01",
+      "estado": "Cerrada",
+      "descripcion": "Lineamientos y publicación oficial del proceso de ascenso del personal asistencial (D.S. N° 013-2025-SA).",
+      "files": [
+        "524203529_1063299242600107_851069528480521598_n.jpg",
+        "Publicacion-Oficial-ds-nro-013-2025.pdf",
+        "SKM_36725100117480.pdf"
+      ]
+    },
+    {
+      "slug": "cas-003-2025",
+      "titulo": "Convocatoria CAS N° 003-2025",
+      "area": "CAS",
+      "fecha_publicacion": "2025-09-01",
+      "estado": "Cerrada",
+      "descripcion": "Proceso de Contratación Administrativa de Servicios (CAS) N° 003-2025, con bases, fe de erratas y resultados.",
+      "files": [
+        "Bases-y-Perfiles-CAS.pdf",
+        "Fe-de-Erratas-02 (1).pdf",
+        "Fe-de-Erratas-02.pdf",
+        "Fe-de-Erratas-03-DL-1057.pdf",
+        "Fe-de-Erratas-Nro.-01.pdf",
+        "LISTA-DE-APTOS-Y-NO-APTOS-29-11-2025.pdf",
+        "Resultado-de-Reconsideraciones-CAS-003-2025.pdf",
+        "Resultados-CV_.pdf",
+        "Resultados-Finales-CAS-003-2025.pdf"
+      ]
+    },
+    {
+      "slug": "nombramiento-salud-2025",
+      "titulo": "Nombramiento del Personal de la Salud 2025",
+      "area": "Nombramiento",
+      "fecha_publicacion": "2025-08-01",
+      "estado": "Cerrada",
+      "descripcion": "Proceso de nombramiento del personal asistencial de la salud conforme a la Ley N° 32185.",
+      "files": [
+        "Comision-nombramiento-literal-T-32185.pdf",
+        "Lista-de-Aptos-y-No-Aptos-Final.pdf",
+        "Publicacion-Aptos-Nombramiento-Asistenciales-2025.pdf"
+      ]
+    },
+    {
+      "slug": "reemplazo-01-2025",
+      "titulo": "Contratación Temporal por Reemplazo N° 01-2025 (D.L. 276)",
+      "area": "Reemplazo",
+      "fecha_publicacion": "2025-07-04",
+      "estado": "Cerrada",
+      "descripcion": "Proceso de selección para la contratación temporal de personal por reemplazo bajo el Decreto Legislativo N° 276.",
+      "files": [
+        "Bases-y-Perfiles-dl-276-Proceso-de-seleccion-2025.pdf",
+        "CamScanner-07-07-2025-09.22.pdf",
+        "Comunicado.pdf",
+        "Cronograma-Entrevista-Cov-276.pdf",
+        "Fe-de-Erratas-01-DL-276.pdf",
+        "FE-DE-ERRATAS-05-CONVOCATORIA-DL-276.pdf",
+        "Fe-de-Erratas-3-Cov-276.pdf",
+        "Fe-de-Erratas-N-04.pdf",
+        "Fe-de-Erratas-N°-002-DL.276-2025.pdf",
+        "RECONSIDERACIONES-PROCESO-CONTRATACION-TEMPORAL-PERSONAL-REEMPLAZO-N°01-2025-GR-CUSCOHAL-UGRH-2.pdf",
+        "Resultado-Evaluacion-Cumplimiento-Requisitos-Evaluacion-CV.pdf",
+        "Resultado-Evaluacion-Cumplimiento-Requisitos-Evaluacion-Descalificado-2.pdf",
+        "RESULTADO-FINAL-CONVOCATORIA-REEMPLAZO-276.pdf",
+        "WhatsApp-Image-2025-07-04-at-8.16.28-PM.jpeg"
+      ]
+    },
+    {
+      "slug": "cas-002-2025-cancer",
+      "titulo": "Convocatoria CAS N° 002-2025 — Programa Cáncer",
+      "area": "CAS",
+      "fecha_publicacion": "2025-06-26",
+      "estado": "Cerrada",
+      "descripcion": "Proceso CAS N° 002-2025 para el Programa Presupuestal de Prevención y Control del Cáncer.",
+      "files": [
+        "CRONOGRAMA-ENTREVISTA-PP-CANCER.pdf",
+        "Fe-de-Erratas-002-CAS-Cancer.pdf",
+        "Fe-de-Erratas-01-DL-1057.pdf",
+        "RESULTADO-FINAL-CAS-CANCER.pdf",
+        "Resultados-Evaluacion-Cov-1057-PP-Cancer.pdf",
+        "SKM_36725062615220.pdf",
+        "SKM_36725062615230.pdf"
+      ]
+    },
+    {
+      "slug": "cambio-grupo-ocupacional-2025",
+      "titulo": "Cambio de Grupo Ocupacional y Cambio de Línea de Carrera",
+      "area": "General",
+      "fecha_publicacion": "2025-05-19",
+      "estado": "Cerrada",
+      "descripcion": "Proceso de Cambio de Grupo Ocupacional y Cambio de Línea de Carrera (D.S. N° 003-2025-SA), con reglamento, cronogramas, comunicados y resultados.",
+      "files": [
+        "1.-ASPECTO-LEGAL.pdf",
+        "2.-REGLAMENTO-PROCESO-DE-CAMBIO-DE-GRUPO-OCUPACIONAL-Y-CAMBIO-DE-LINEA-DE-CARRERA.pdf",
+        "3.-CRONOGRAMA-PROCESO-DE-CAMBIO-DE-GRUPO-OCUPACIONAL-Y-CAMBIO-DE-LINEA-DE-CARRERA.pdf",
+        "Comunicado_12.pdf",
+        "COMUNICADO-1-CGO-y-CLC.pdf",
+        "COMUNICADO-11-CGO-y-CLC.pdf",
+        "COMUNICADO-7-CGO-y-CLC.pdf",
+        "COMUNICADO-8-CGO-y-CLC.docx.pdf",
+        "COMUNICADO-9-CGO-y-CLC.pdf",
+        "cronograma_19-05-25-actualizado.pdf",
+        "cronograma_al-28-05-25-actualizado.pdf",
+        "Cronograma_V3-hasta-21-05-2025.pdf",
+        "ilovepdf_merged.pdf",
+        "resultado_final-CUADRO-ABSUELTO-TODOS.pdf",
+        "WhatsApp-Image-2025-06-17-at-5.10.50-PM.jpeg"
+      ]
+    },
+    {
+      "slug": "cas-02-2025",
+      "titulo": "Contratación Administrativa de Servicios — CAS N° 02-2025",
+      "area": "CAS",
+      "fecha_publicacion": "2025-03-04",
+      "estado": "Cerrada",
+      "descripcion": "Segunda convocatoria de Contratación Administrativa de Servicios (CAS) N° 02-2025-UGRH-HAL.",
+      "files": [
+        "APTOS-Y-NO-APTOS-SEGUNDA-CONVOCATORIA-2025-1.pdf",
+        "BASES-HAL-1.pdf",
+        "img20250304_12453812.pdf"
+      ]
+    },
+    {
+      "slug": "cas-01-2025",
+      "titulo": "Convocatoria CAS N° 01-2025",
+      "area": "CAS",
+      "fecha_publicacion": "2025-01-15",
+      "estado": "Cerrada",
+      "descripcion": "Primera convocatoria de Contratación Administrativa de Servicios (CAS) N° 01-2025-UGRH-HAL.",
+      "files": [
+        "APTOS-Y-NO-APTOS-DE-ULTIMA-CONVOCATORIA-2025-1.pdf",
+        "BASES-HAL.pdf",
+        "GANADORES-DE-ENTREVISTA-01-02-25.pdf"
+      ]
+    },
+    {
+      "slug": "cas-excepcional-cancer-2024",
+      "titulo": "Concurso CAS Excepcional — Programa Cáncer",
+      "area": "CAS",
+      "fecha_publicacion": "2024-12-20",
+      "estado": "Cerrada",
+      "descripcion": "Concurso CAS de selección de personal (excepcional) para el Programa de Cáncer, con fe de erratas y resultados finales.",
+      "files": [
+        "CAS-EXCEPCIONAL.pdf",
+        "FE-ERRATAS.pdf",
+        "RESULTADOS-FINALES.pdf"
+      ]
+    },
+    {
+      "slug": "reemplazo-02-2024",
+      "titulo": "Contratación Temporal por Reemplazo N° 02-2024 (D.L. 276)",
+      "area": "Reemplazo",
+      "fecha_publicacion": "2024-12-14",
+      "estado": "Cerrada",
+      "descripcion": "Proceso de contratación temporal de personal por reemplazo N° 02-2024 bajo el Decreto Legislativo N° 276.",
+      "files": [
+        "DOC-20241214-WA0039.pdf",
+        "FE-DE-ERRATAS.pdf",
+        "PLAZA-DE-REEMPLAZO-N°002-2024-DL-276-1.pdf",
+        "PLAZAS-DE-REEMPLAZO-002-2024.pdf"
+      ]
+    },
+    {
+      "slug": "reemplazo-01-2024",
+      "titulo": "Contratación Temporal por Reemplazo N° 01-2024 (D.L. 276)",
+      "area": "Reemplazo",
+      "fecha_publicacion": "2024-11-15",
+      "estado": "Cerrada",
+      "descripcion": "Proceso de contratación temporal de personal por reemplazo N° 01-2024 bajo el Decreto Legislativo N° 276.",
+      "files": [
+        "CONVOCATORIA-REEMPLAZO-2.pdf",
+        "RESULTADOS-CONCURSO-001-2024-276-1.pdf",
+        "Resultados-evaluacion-curricular-.pdf"
+      ]
+    },
+    {
+      "slug": "cas-003-2024",
+      "titulo": "Convocatoria CAS N° 003-2024",
+      "area": "CAS",
+      "fecha_publicacion": "2024-10-01",
+      "estado": "Cerrada",
+      "descripcion": "Proceso de Contratación Administrativa de Servicios (CAS) N° 003-2024, con bases, fe de erratas y resultados.",
+      "files": [
+        "Bases-Convocatoria-CAS-002_2024-1.pdf",
+        "Bases-Convocatoria-CAS-002_2024.pdf",
+        "FE-DE-ERRATAS_001-Concurso-Cas-002_2024-1-1.pdf",
+        "Resultados_Evaluacion_Curricular_Concurso_Cas_002_2024-1-1.pdf",
+        "Resultados_Finales_Cas_002_2024-1.pdf"
+      ]
+    },
+    {
+      "slug": "cas-002-2024",
+      "titulo": "Convocatoria CAS N° 002-2024",
+      "area": "CAS",
+      "fecha_publicacion": "2024-08-15",
+      "estado": "Cerrada",
+      "descripcion": "Proceso de Contratación Administrativa de Servicios (CAS) N° 002-2024, con bases, fe de erratas y resultados.",
+      "files": [
+        "Bases-Convocatoria-CAS-002_2024.pdf",
+        "FE-DE-ERRATAS_001-Concurso-Cas-002_2024-1.pdf",
+        "Resultados_Evaluacion_Curricular_Concurso_Cas_002_2024-1.pdf",
+        "Resultados_Finales_Cas_002_2024.pdf"
+      ]
+    }
+  ]
+}

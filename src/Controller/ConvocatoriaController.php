@@ -34,10 +34,30 @@ final class ConvocatoriaController extends Controller
 
     // ── Lectura pública ───────────────────────────────────────────────
 
-    /** GET /convocatorias — metadatos de convocatorias publicadas. */
+    /** GET /convocatorias — metadatos de convocatorias publicadas (búsqueda + paginación). */
     public function index(Request $request, Response $response): Response
     {
-        return $this->json($response, ['convocatorias' => $this->convocatorias->publicados()]);
+        $q = $request->getQueryParams();
+
+        $resultado = $this->convocatorias->publicadosBuscar([
+            'q'        => $q['q']        ?? null,
+            'area'     => $q['area']     ?? null,
+            'year'     => $q['year']     ?? null,
+            'month'    => $q['month']    ?? null,
+            'page'     => $q['page']     ?? null,
+            'per_page' => $q['per_page'] ?? null,
+        ]);
+
+        return $this->json($response, [
+            'convocatorias' => $resultado['items'],
+            'meta'          => [
+                'total'       => $resultado['total'],
+                'page'        => $resultado['page'],
+                'per_page'    => $resultado['per_page'],
+                'total_pages' => $resultado['total_pages'],
+                'years'       => $this->convocatorias->aniosPublicados(),
+            ],
+        ]);
     }
 
     /** GET /convocatorias/{slug} — una convocatoria publicada con sus archivos. */

@@ -68,23 +68,41 @@ final class AuthController extends Controller
             $expira
         );
 
-        // Enviar el código por email.
-        try {
-            $this->enviarCodigo((string) $user['email'], (string) $user['nombre'], $codigo);
-        } catch (Throwable $e) {
-            return $this->json(
-                $response,
-                ['error' => 'No se pudo enviar el código de verificación. Inténtalo más tarde.'],
-                502
-            );
+        // Bypass de 2FA SOLO para desarrollo (AUTH_2FA_DEV=true): omite el envío
+        // por SMTP y devuelve el código en la respuesta. Desactivado por defecto;
+        // en producción NUNCA debe activarse.
+        $devBypass = filter_var($_ENV['AUTH_2FA_DEV'] ?? 'false', FILTER_VALIDATE_BOOL);
+
+        if ($devBypass) {
+            error_log("[DEV 2FA] código para {$user['email']}: {$codigo}");
+        } else {
+            // Enviar el código por email.
+            try {
+                $this->enviarCodigo((string) $user['email'], (string) $user['nombre'], $codigo);
+            } catch (Throwable $e) {
+                return $this->json(
+                    $response,
+                    ['error' => 'No se pudo enviar el código de verificación. Inténtalo más tarde.'],
+                    502
+                );
+            }
         }
 
-        return $this->json($response, [
+        $payload = [
             'requiere2fa' => true,
             'email'       => $user['email'],
             'expira_en'   => self::CODIGO_TTL,
-            'mensaje'     => 'Te enviamos un código de verificación a tu correo.',
-        ]);
+            'mensaje'     => $devBypass
+                ? 'Modo desarrollo: usa el código mostrado abajo.'
+                : 'Te enviamos un código de verificación a tu correo.',
+        ];
+
+        // Solo en desarrollo: exponer el código para autocompletarlo en la UI.
+        if ($devBypass) {
+            $payload['dev_codigo'] = $codigo;
+        }
+
+        return $this->json($response, $payload);
     }
 
     /**
