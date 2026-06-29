@@ -1,7 +1,7 @@
 -- Seed de convocatorias (hal-convocatorias-api) -> 17 convocatorias + archivos.
 -- Importar en phpMyAdmin sobre la BD haladminweb_convocatorias_bd DESPUES de
 -- crear las tablas (convocatorias.sql). Reemplaza el modelo estatico del sitio.
--- Tras importar, subir los PDFs a public_html/documentos/convocatorias/<slug>/.
+-- Tras importar, los PDFs ya estan en public_html/convocatorias/<slug>/.
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
