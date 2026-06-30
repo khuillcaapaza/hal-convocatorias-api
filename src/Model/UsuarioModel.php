@@ -10,13 +10,13 @@ use PDO;
 /**
  * Acceso a datos de usuarios del panel (tabla usuarios).
  */
-final class UsuarioModel
+class UsuarioModel
 {
     private PDO $pdo;
 
-    public function __construct()
+    public function __construct(?PDO $pdo = null)
     {
-        $this->pdo = Database::pdo();
+        $this->pdo = $pdo ?? Database::pdo();
     }
 
     /** Busca un usuario activo por su email. Null si no existe. */

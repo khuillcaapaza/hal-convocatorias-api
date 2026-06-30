@@ -13,13 +13,13 @@ use PDO;
  * El código nunca se guarda en claro: se almacena su hash (password_hash) y se
  * verifica con password_verify, igual que una contraseña.
  */
-final class LoginCodigoModel
+class LoginCodigoModel
 {
     private PDO $pdo;
 
-    public function __construct()
+    public function __construct(?PDO $pdo = null)
     {
-        $this->pdo = Database::pdo();
+        $this->pdo = $pdo ?? Database::pdo();
     }
 
     /**

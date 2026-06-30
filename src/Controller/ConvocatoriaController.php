@@ -26,10 +26,17 @@ final class ConvocatoriaController extends Controller
     private ConvocatoriaModel $convocatorias;
     private ArchivoModel $archivos;
 
-    public function __construct()
-    {
-        $this->convocatorias = new ConvocatoriaModel();
-        $this->archivos      = new ArchivoModel();
+    /** @var callable(string, string, string): bool */
+    private $relayDelete;
+
+    public function __construct(
+        ?ConvocatoriaModel $convocatorias = null,
+        ?ArchivoModel $archivos = null,
+        ?callable $relayDelete = null
+    ) {
+        $this->convocatorias = $convocatorias ?? new ConvocatoriaModel();
+        $this->archivos      = $archivos ?? new ArchivoModel();
+        $this->relayDelete   = $relayDelete ?? [$this, 'relayBorradoHttp'];
     }
 
     // ── Lectura pública ───────────────────────────────────────────────
@@ -319,11 +326,18 @@ final class ConvocatoriaController extends Controller
      */
     private function relayBorrado(string $slug, string $nombre, string $auth): bool
     {
+        return ($this->relayDelete)($slug, $nombre, $auth);
+    }
+
+    /** Implementación HTTP real del relay (curl). Aislada para poder inyectarse en tests. */
+    private function relayBorradoHttp(string $slug, string $nombre, string $auth): bool
+    {
         $base = rtrim((string) ($_ENV['FILES_API_BASE_URL'] ?? ''), '/');
         if ($base === '' || !function_exists('curl_init')) {
             return false;
         }
 
+        // @codeCoverageIgnoreStart
         $headers = ['Content-Type: application/json'];
         if ($auth !== '') {
             $headers[] = 'Authorization: ' . $auth;
@@ -342,5 +356,6 @@ final class ConvocatoriaController extends Controller
         curl_close($ch);
 
         return $code >= 200 && $code < 300;
+        // @codeCoverageIgnoreEnd
     }
 }

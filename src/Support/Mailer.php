@@ -15,7 +15,7 @@ use RuntimeException;
  *   SMTP_HOST, SMTP_PORT, SMTP_SECURE (ssl|tls), SMTP_USER, SMTP_PASS,
  *   SMTP_FROM, SMTP_FROM_NAME.
  */
-final class Mailer
+class Mailer
 {
     /**
      * Envía un correo HTML.
@@ -37,7 +37,7 @@ final class Mailer
         $from   = (string) ($_ENV['SMTP_FROM'] ?? $user);
         $fromN  = (string) ($_ENV['SMTP_FROM_NAME'] ?? 'Hospital Antonio Lorena');
 
-        $mail = new PHPMailer(true);
+        $mail = $this->nuevoMailer();
 
         try {
             $mail->isSMTP();
@@ -64,5 +64,11 @@ final class Mailer
             // No exponer detalles internos del SMTP al cliente.
             throw new RuntimeException('No se pudo enviar el correo: ' . $e->getMessage(), 0, $e);
         }
+    }
+
+    /** Crea la instancia de PHPMailer. Aislada para poder sustituirse en tests. */
+    protected function nuevoMailer(): PHPMailer
+    {
+        return new PHPMailer(true);
     }
 }

@@ -31,11 +31,16 @@ final class AuthController extends Controller
 
     private UsuarioModel $usuarios;
     private LoginCodigoModel $codigos;
+    private Mailer $mailer;
 
-    public function __construct()
-    {
-        $this->usuarios = new UsuarioModel();
-        $this->codigos  = new LoginCodigoModel();
+    public function __construct(
+        ?UsuarioModel $usuarios = null,
+        ?LoginCodigoModel $codigos = null,
+        ?Mailer $mailer = null
+    ) {
+        $this->usuarios = $usuarios ?? new UsuarioModel();
+        $this->codigos  = $codigos ?? new LoginCodigoModel();
+        $this->mailer   = $mailer ?? new Mailer();
     }
 
     /**
@@ -226,6 +231,6 @@ final class AuthController extends Controller
             . "Tu código de acceso es: {$codigo}\n"
             . "Caduca en {$minutos} minutos. Si no intentaste iniciar sesión, ignora este mensaje.";
 
-        (new Mailer())->enviar($email, $nombre, $asunto, $html, $texto);
+        $this->mailer->enviar($email, $nombre, $asunto, $html, $texto);
     }
 }

@@ -3,6 +3,9 @@ name: Deploy API (hal-convocatorias-api)
 on:
   push:
     branches: [main]
+  # Corre los tests en pull requests para frenar regresiones antes del merge.
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -16,7 +19,31 @@ env:
   BASE_URL: https://convocatorias.hospitalantoniolorena.gob.pe
 
 jobs:
+  # Ejecuta los tests (PHPUnit) antes de desplegar. El job de deploy depende de
+  # este, asi un test fallido bloquea el deploy.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          tools: composer:v2
+          extensions: pdo, pdo_mysql, mbstring, zip
+
+      - name: Instalar dependencias (con dev)
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Ejecutar tests
+        run: composer test
+
   deploy:
+    needs: test
+    # Solo despliega en push a main / ejecucion manual, nunca en pull requests.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

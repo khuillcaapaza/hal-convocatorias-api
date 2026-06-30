@@ -14,3 +14,8 @@ Thumbs.db
 /vendor.zip
 /unpack.php
 /stage/
+
+# Tests / cobertura
+/.phpunit.cache/
+/coverage/
+.phpunit.result.cache

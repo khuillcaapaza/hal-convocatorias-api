@@ -14,13 +14,13 @@ use PDO;
  * de salida imita el modelo del sitio (slug/title/area/date/status/files) para
  * que la migración del front sea trivial.
  */
-final class ConvocatoriaModel
+class ConvocatoriaModel
 {
     private PDO $pdo;
 
-    public function __construct()
+    public function __construct(?PDO $pdo = null)
     {
-        $this->pdo = Database::pdo();
+        $this->pdo = $pdo ?? Database::pdo();
     }
 
     // ── Lectura ───────────────────────────────────────────────────────

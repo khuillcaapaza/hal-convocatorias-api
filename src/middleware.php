@@ -61,12 +61,23 @@ return function (App $app): void {
 
     // Cabeceras de seguridad
     $app->add(function (Request $request, $handler): Response {
-        $response = $handler->handle($request);
-
-        return $response
+        $response = $handler->handle($request)
             ->withHeader('X-Content-Type-Options', 'nosniff')
             ->withHeader('X-Frame-Options', 'DENY')
-            ->withHeader('Referrer-Policy', 'no-referrer');
+            ->withHeader('Referrer-Policy', 'no-referrer')
+            // Esta API solo devuelve JSON: no debe cargar ni embeber recurso alguno.
+            ->withHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+            // Desactiva APIs del navegador que una respuesta JSON nunca necesita.
+            ->withHeader('Permissions-Policy', 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()');
+
+        // HSTS solo si la petición llega por HTTPS (los navegadores la ignoran en HTTP).
+        $esHttps = $request->getUri()->getScheme() === 'https'
+            || strtolower($request->getHeaderLine('X-Forwarded-Proto')) === 'https';
+        if ($esHttps) {
+            $response = $response->withHeader('Strict-Transport-Security', 'max-age=31536000');
+        }
+
+        return $response;
     });
 
     // Autenticación JWT (solo si está habilitada y hay secreto configurado).

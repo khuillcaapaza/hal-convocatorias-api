@@ -12,13 +12,13 @@ use PDO;
  *
  * Solo metadatos: el binario físico lo gestiona hal-archivos-api.
  */
-final class ArchivoModel
+class ArchivoModel
 {
     private PDO $pdo;
 
-    public function __construct()
+    public function __construct(?PDO $pdo = null)
     {
-        $this->pdo = Database::pdo();
+        $this->pdo = $pdo ?? Database::pdo();
     }
 
     /** Inserta un metadato de archivo. Devuelve el id nuevo. */
