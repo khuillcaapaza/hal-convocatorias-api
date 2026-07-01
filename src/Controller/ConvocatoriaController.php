@@ -124,6 +124,15 @@ final class ConvocatoriaController extends Controller
             return $this->json($response, ['error' => $error], 422);
         }
 
+        // Una convocatoria cerrada es de solo lectura: solo se permite reabrirla.
+        $estadoActual = $this->convocatorias->estadoPorSlug($slug);
+        if ($estadoActual === null) {
+            return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
+        }
+        if ($estadoActual === 'Cerrada' && $campos['estado'] !== 'Abierta') {
+            return $this->json($response, ['error' => 'La convocatoria está cerrada (solo lectura). Reábrela para poder editarla.'], 409);
+        }
+
         if (!$this->convocatorias->actualizar($slug, $campos)) {
             return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
         }
@@ -175,6 +184,9 @@ final class ConvocatoriaController extends Controller
         if ($id === null) {
             return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
         }
+        if ($this->convocatorias->estadoPorSlug($slug) === 'Cerrada') {
+            return $this->json($response, ['error' => 'La convocatoria está cerrada (solo lectura).'], 409);
+        }
 
         [$campos, $error] = $this->validarArchivo((array) $request->getParsedBody());
         if ($error !== null) {
@@ -197,6 +209,9 @@ final class ConvocatoriaController extends Controller
         $cid  = $this->convocatorias->idPorSlug($slug);
         if ($cid === null) {
             return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
+        }
+        if ($this->convocatorias->estadoPorSlug($slug) === 'Cerrada') {
+            return $this->json($response, ['error' => 'La convocatoria está cerrada (solo lectura).'], 409);
         }
 
         $archivoId = (int) $args['id'];

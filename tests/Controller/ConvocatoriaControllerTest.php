@@ -207,6 +207,7 @@ final class ConvocatoriaControllerTest extends TestCase
     public function testUpdateNoEncontrada(): void
     {
         $conv = $this->createMock(ConvocatoriaModel::class);
+        $conv->method('estadoPorSlug')->willReturn('Abierta');
         $conv->method('actualizar')->willReturn(false);
 
         $resp = $this->controller($conv)->update(
@@ -220,6 +221,7 @@ final class ConvocatoriaControllerTest extends TestCase
     public function testUpdateExitoso(): void
     {
         $conv = $this->createMock(ConvocatoriaModel::class);
+        $conv->method('estadoPorSlug')->willReturn('Abierta');
         $conv->method('actualizar')->willReturn(true);
 
         $resp = $this->controller($conv)->update(
@@ -229,6 +231,34 @@ final class ConvocatoriaControllerTest extends TestCase
         );
         $this->assertSame(200, $resp->getStatusCode());
         $this->assertSame('cas-001-2026', $this->jsonBody($resp)['slug']);
+    }
+
+    public function testUpdateCerradaEsSoloLectura(): void
+    {
+        $conv = $this->createMock(ConvocatoriaModel::class);
+        $conv->method('estadoPorSlug')->willReturn('Cerrada');
+        $conv->expects($this->never())->method('actualizar');
+
+        $resp = $this->controller($conv)->update(
+            $this->request('PUT', $this->bodyValido(['estado' => 'Cerrada'])),
+            $this->response(),
+            ['slug' => 'cas-001-2026']
+        );
+        $this->assertSame(409, $resp->getStatusCode());
+    }
+
+    public function testUpdateReabrirCerradaPermitido(): void
+    {
+        $conv = $this->createMock(ConvocatoriaModel::class);
+        $conv->method('estadoPorSlug')->willReturn('Cerrada');
+        $conv->method('actualizar')->willReturn(true);
+
+        $resp = $this->controller($conv)->update(
+            $this->request('PUT', $this->bodyValido(['estado' => 'Abierta'])),
+            $this->response(),
+            ['slug' => 'cas-001-2026']
+        );
+        $this->assertSame(200, $resp->getStatusCode());
     }
 
     // ── destroy ───────────────────────────────────────────────────────

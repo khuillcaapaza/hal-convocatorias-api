@@ -168,6 +168,16 @@ class ConvocatoriaModel
         return $id === false ? null : (int) $id;
     }
 
+    /** Estado ('Abierta'|'Cerrada') de una convocatoria por slug, o null si no existe. */
+    public function estadoPorSlug(string $slug): ?string
+    {
+        $stmt = $this->pdo->prepare('SELECT estado FROM convocatorias WHERE slug = ? LIMIT 1');
+        $stmt->execute([$slug]);
+        $estado = $stmt->fetchColumn();
+
+        return $estado === false ? null : (string) $estado;
+    }
+
     // ── Escritura ─────────────────────────────────────────────────────
 
     /** Inserta una convocatoria. Devuelve el id nuevo. */
