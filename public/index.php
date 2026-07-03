@@ -27,5 +27,6 @@ if ($basePath !== '') {
 // Rutas
 (require __DIR__ . '/../src/routes.php')($app);
 (require __DIR__ . '/../src/routes-convocatorias.php')($app);
+(require __DIR__ . '/../src/routes-users.php')($app);
 
 $app->run();
