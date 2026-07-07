@@ -92,8 +92,6 @@ return function (App $app): void {
         $base   = rtrim($_ENV['APP_BASE_PATH'] ?? '', '/');
         $paths  = [$base === '' ? '/' : $base];          // proteger toda la API
         $ignore = [                                       // rutas públicas
-            $base . '/login',
-            $base . '/login/verify',
             $base . '/health',
             $base . '/convocatorias',                     // lectura pública (GET)
         ];
@@ -107,6 +105,21 @@ return function (App $app): void {
             ]
         ));
     }
+
+    // Validación de módulo: el JWT emitido por hal-auth-api debe incluir
+    // 'convocatorias' en el array modulos[]. Evita que tokens de otros módulos
+    // (comparten JWT_SECRET) accedan aquí.
+    $app->add(function (Request $request, $handler) use ($app): Response {
+        $token = $request->getAttribute('token');
+        if (is_array($token) && isset($token['modulos'])) {
+            if (!in_array('convocatorias', (array) $token['modulos'], true)) {
+                $resp = $app->getResponseFactory()->createResponse(403);
+                $resp->getBody()->write(json_encode(['error' => 'Sin acceso al módulo de convocatorias']));
+                return $resp->withHeader('Content-Type', 'application/json');
+            }
+        }
+        return $handler->handle($request);
+    });
 
     // Manejo de errores. En producción APP_DEBUG=false => no filtrar stack traces.
     $displayErrors   = filter_var($_ENV['APP_DEBUG'] ?? 'true', FILTER_VALIDATE_BOOL);
