@@ -27,13 +27,29 @@ return function (App $app): void {
         'trim',
         explode(',', $_ENV['CORS_ORIGINS'] ?? '*')
     )));
+    $allowAll = $origins === [] || in_array('*', $origins, true);
+
+    $aplicarCors = function (Request $request, Response $response) use ($origins, $allowAll): Response {
+        $origin = $request->getHeaderLine('Origin');
+        if ($allowAll) {
+            return $response
+                ->withHeader('Access-Control-Allow-Origin', '*')
+                ->withHeader('Vary', 'Origin');
+        }
+        if ($origin !== '' && in_array($origin, $origins, true)) {
+            return $response
+                ->withHeader('Access-Control-Allow-Origin', $origin)
+                ->withHeader('Access-Control-Allow-Credentials', 'true')
+                ->withHeader('Vary', 'Origin');
+        }
+        return $response;
+    };
 
     // Anti-CSRF (defensa en profundidad): en métodos de escritura, si la petición
     // trae cabecera Origin, debe estar en la allowlist. Un navegador siempre envía
     // Origin en una escritura cross-site, así que esto frena CSRF desde otra web.
     // Si no hay Origin (curl/Postman/servidor) se permite: el JWT es la barrera
     // principal de /admin/*. Con CORS_ORIGINS='*' (local) se omite por completo.
-    $allowAll = $origins === [] || in_array('*', $origins, true);
     $app->add(function (Request $request, $handler) use ($app, $origins, $allowAll): Response {
         $esEscritura = in_array(
             strtoupper($request->getMethod()),
@@ -129,11 +145,11 @@ return function (App $app): void {
     // Respuesta JSON 401 cuando la autenticación JWT falla
     $errorMiddleware->setErrorHandler(
         AuthorizationException::class,
-        function (Request $request) use ($app): Response {
+        function (Request $request) use ($app, $aplicarCors): Response {
             $response = $app->getResponseFactory()->createResponse(401);
             $response->getBody()->write(json_encode(['error' => 'No autorizado']));
-
-            return $response->withHeader('Content-Type', 'application/json');
+            $response = $response->withHeader('Content-Type', 'application/json');
+            return $aplicarCors($request, $response);
         }
     );
 };
