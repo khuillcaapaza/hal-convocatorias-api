@@ -72,9 +72,9 @@ $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $insConv = $pdo->prepare(
     'INSERT INTO convocatorias
-        (slug, titulo, area, fecha_publicacion, estado, descripcion, cuerpo, publicado)
+    (uuid, slug, titulo, area, fecha_publicacion, estado, descripcion, cuerpo, publicado)
      VALUES
-        (:slug, :titulo, :area, :fecha_publicacion, :estado, :descripcion, :cuerpo, 1)'
+    (UUID(), :slug, :titulo, :area, :fecha_publicacion, :estado, :descripcion, :cuerpo, 1)'
 );
 
 $insArch = $pdo->prepare(

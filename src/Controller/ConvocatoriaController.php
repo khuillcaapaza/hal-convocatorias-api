@@ -67,10 +67,12 @@ final class ConvocatoriaController extends Controller
         ]);
     }
 
-    /** GET /convocatorias/{slug} — una convocatoria publicada con sus archivos. */
+    /** GET /convocatorias/{uuid} — una convocatoria publicada con sus archivos. */
     public function show(Request $request, Response $response, array $args): Response
     {
-        $conv = $this->convocatorias->publicadaPorSlug((string) $args['slug']);
+        $conv = isset($args['uuid'])
+            ? $this->convocatorias->publicadaPorUuid((string) $args['uuid'])
+            : $this->convocatorias->publicadaPorSlug((string) $args['slug']);
         if ($conv === null) {
             return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
         }
@@ -86,10 +88,12 @@ final class ConvocatoriaController extends Controller
         return $this->json($response, ['convocatorias' => $this->convocatorias->todosMeta()]);
     }
 
-    /** GET /admin/convocatorias/{slug} — una convocatoria completa para edición. */
+    /** GET /admin/convocatorias/{uuid} — una convocatoria completa para edición. */
     public function adminShow(Request $request, Response $response, array $args): Response
     {
-        $conv = $this->convocatorias->porSlug((string) $args['slug']);
+        $conv = isset($args['uuid'])
+            ? $this->convocatorias->porUuid((string) $args['uuid'])
+            : $this->convocatorias->porSlug((string) $args['slug']);
         if ($conv === null) {
             return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
         }
@@ -109,23 +113,27 @@ final class ConvocatoriaController extends Controller
             return $this->json($response, ['error' => 'Ya existe una convocatoria con ese slug.'], 409);
         }
 
+        $campos['uuid'] = $this->uuidV4();
         $this->convocatorias->crear($campos);
 
-        return $this->json($response, ['ok' => true, 'slug' => $campos['slug']], 201);
+        return $this->json($response, ['ok' => true, 'uuid' => $campos['uuid'], 'slug' => $campos['slug']], 201);
     }
 
-    /** PUT /admin/convocatorias/{slug} — actualizar una convocatoria. */
+    /** PUT /admin/convocatorias/{uuid} — actualizar una convocatoria. */
     public function update(Request $request, Response $response, array $args): Response
     {
-        $slug = (string) $args['slug'];
+        $uuid = (string) ($args['uuid'] ?? '');
+        $slugLegacy = (string) ($args['slug'] ?? '');
 
-        [$campos, $error] = $this->validar((array) $request->getParsedBody(), $slug);
+        [$campos, $error] = $this->validar((array) $request->getParsedBody());
         if ($error !== null) {
             return $this->json($response, ['error' => $error], 422);
         }
 
         // Una convocatoria cerrada es de solo lectura: solo se permite reabrirla.
-        $estadoActual = $this->convocatorias->estadoPorSlug($slug);
+        $estadoActual = $uuid !== ''
+            ? $this->convocatorias->estadoPorUuid($uuid)
+            : $this->convocatorias->estadoPorSlug($slugLegacy);
         if ($estadoActual === null) {
             return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
         }
@@ -133,19 +141,32 @@ final class ConvocatoriaController extends Controller
             return $this->json($response, ['error' => 'La convocatoria está cerrada (solo lectura). Reábrela para poder editarla.'], 409);
         }
 
-        if (!$this->convocatorias->actualizar($slug, $campos)) {
+        $actualizado = $uuid !== ''
+            ? $this->convocatorias->actualizarPorUuid($uuid, $campos)
+            : $this->convocatorias->actualizar($slugLegacy, $campos);
+        if (!$actualizado) {
             return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
         }
 
-        return $this->json($response, ['ok' => true, 'slug' => $slug]);
+        $payload = ['ok' => true];
+        if ($uuid !== '') {
+            $payload['uuid'] = $uuid;
+        } else {
+            $payload['slug'] = $slugLegacy;
+        }
+
+        return $this->json($response, $payload);
     }
 
-    /** DELETE /admin/convocatorias/{slug} — eliminar convocatoria + sus archivos. */
+    /** DELETE /admin/convocatorias/{uuid} — eliminar convocatoria + sus archivos. */
     public function destroy(Request $request, Response $response, array $args): Response
     {
-        $slug = (string) $args['slug'];
+        $uuid = (string) ($args['uuid'] ?? '');
+        $slugLegacy = (string) ($args['slug'] ?? '');
 
-        $conv = $this->convocatorias->porSlug($slug);
+        $conv = $uuid !== ''
+            ? $this->convocatorias->porUuid($uuid)
+            : $this->convocatorias->porSlug($slugLegacy);
         if ($conv === null) {
             return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
         }
@@ -154,13 +175,17 @@ final class ConvocatoriaController extends Controller
         $auth        = $request->getHeaderLine('Authorization');
         $noBorrados  = [];
         foreach ($conv['files'] as $file) {
-            if (!$this->relayBorrado($slug, (string) $file['name'], $auth)) {
+            if (!$this->relayBorrado((string) $conv['slug'], (string) $file['name'], $auth)) {
                 $noBorrados[] = $file['name'];
             }
         }
 
         // Borrar la fila (CASCADE elimina los metadatos de archivo).
-        $this->convocatorias->eliminar($slug);
+        if ($uuid !== '') {
+            $this->convocatorias->eliminarPorUuid($uuid);
+        } else {
+            $this->convocatorias->eliminar($slugLegacy);
+        }
 
         $payload = ['ok' => true];
         if ($noBorrados !== []) {
@@ -174,17 +199,23 @@ final class ConvocatoriaController extends Controller
     // ── Archivos de una convocatoria ──────────────────────────────────
 
     /**
-     * POST /admin/convocatorias/{slug}/archivos — registra el metadato de un
+    * POST /admin/convocatorias/{uuid}/archivos — registra el metadato de un
      * archivo ya subido directamente a hal-archivos-api.
      */
     public function addArchivo(Request $request, Response $response, array $args): Response
     {
-        $slug = (string) $args['slug'];
-        $id   = $this->convocatorias->idPorSlug($slug);
+        $uuid = (string) ($args['uuid'] ?? '');
+        $slugLegacy = (string) ($args['slug'] ?? '');
+        $id   = $uuid !== ''
+            ? $this->convocatorias->idPorUuid($uuid)
+            : $this->convocatorias->idPorSlug($slugLegacy);
         if ($id === null) {
             return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
         }
-        if ($this->convocatorias->estadoPorSlug($slug) === 'Cerrada') {
+        $estado = $uuid !== ''
+            ? $this->convocatorias->estadoPorUuid($uuid)
+            : $this->convocatorias->estadoPorSlug($slugLegacy);
+        if ($estado === 'Cerrada') {
             return $this->json($response, ['error' => 'La convocatoria está cerrada (solo lectura).'], 409);
         }
 
@@ -200,17 +231,24 @@ final class ConvocatoriaController extends Controller
     }
 
     /**
-     * DELETE /admin/convocatorias/{slug}/archivos/{id} — borra el metadato y
+     * DELETE /admin/convocatorias/{uuid}/archivos/{id} — borra el metadato y
      * reenvía el borrado físico al servicio de archivos.
      */
     public function deleteArchivo(Request $request, Response $response, array $args): Response
     {
-        $slug = (string) $args['slug'];
-        $cid  = $this->convocatorias->idPorSlug($slug);
+        $uuid = (string) ($args['uuid'] ?? '');
+        $slugLegacy = (string) ($args['slug'] ?? '');
+        $conv = $uuid !== '' ? $this->convocatorias->porUuid($uuid) : null;
+        $cid  = $uuid !== ''
+            ? ($conv === null ? null : (int) $conv['id'])
+            : $this->convocatorias->idPorSlug($slugLegacy);
         if ($cid === null) {
             return $this->json($response, ['error' => 'Convocatoria no encontrada'], 404);
         }
-        if ($this->convocatorias->estadoPorSlug($slug) === 'Cerrada') {
+        $estado = $uuid !== ''
+            ? $this->convocatorias->estadoPorUuid($uuid)
+            : $this->convocatorias->estadoPorSlug($slugLegacy);
+        if ($estado === 'Cerrada') {
             return $this->json($response, ['error' => 'La convocatoria está cerrada (solo lectura).'], 409);
         }
 
@@ -221,7 +259,8 @@ final class ConvocatoriaController extends Controller
         }
 
         $auth     = $request->getHeaderLine('Authorization');
-        $borrado  = $this->relayBorrado($slug, (string) $archivo['nombre_archivo'], $auth);
+        $physicalSlug = $uuid !== '' ? (string) $conv['slug'] : $slugLegacy;
+        $borrado  = $this->relayBorrado($physicalSlug, (string) $archivo['nombre_archivo'], $auth);
 
         $this->archivos->eliminar($archivoId);
 
@@ -333,6 +372,16 @@ final class ConvocatoriaController extends Controller
         $s = preg_replace('/[^a-z0-9]+/', '-', $s) ?? '';
 
         return trim($s, '-');
+    }
+
+    /** Genera un UUID v4 sin introducir una dependencia adicional. */
+    private function uuidV4(): string
+    {
+        $bytes = random_bytes(16);
+        $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
+        $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
     }
 
     /**

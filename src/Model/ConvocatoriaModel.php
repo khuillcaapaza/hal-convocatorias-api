@@ -11,7 +11,7 @@ use PDO;
  * Acceso a datos de las convocatorias (tabla convocatorias) y sus archivos.
  *
  * Todas las consultas son preparadas (anti inyección SQL — OWASP A03). La forma
- * de salida imita el modelo del sitio (slug/title/area/date/status/files) para
+ * de salida imita el modelo del sitio (uuid/slug/title/area/date/status/files) para
  * que la migración del front sea trivial.
  */
 class ConvocatoriaModel
@@ -29,7 +29,7 @@ class ConvocatoriaModel
     public function publicados(): array
     {
         $rows = $this->pdo->query(
-            'SELECT c.slug, c.titulo, c.area, c.fecha_publicacion, c.estado, c.descripcion, c.publicado,
+            'SELECT c.uuid, c.slug, c.titulo, c.area, c.fecha_publicacion, c.estado, c.descripcion, c.publicado,
                     (SELECT COUNT(*) FROM convocatoria_archivos a WHERE a.convocatoria_id = c.id) AS archivos
                FROM convocatorias c WHERE c.publicado = 1
               ORDER BY c.fecha_publicacion DESC, c.id DESC'
@@ -42,7 +42,7 @@ class ConvocatoriaModel
     public function todosMeta(): array
     {
         $rows = $this->pdo->query(
-            'SELECT c.slug, c.titulo, c.area, c.fecha_publicacion, c.estado, c.descripcion, c.publicado,
+            'SELECT c.uuid, c.slug, c.titulo, c.area, c.fecha_publicacion, c.estado, c.descripcion, c.publicado,
                     (SELECT COUNT(*) FROM convocatoria_archivos a WHERE a.convocatoria_id = c.id) AS archivos
                FROM convocatorias c ORDER BY c.fecha_publicacion DESC, c.id DESC'
         )->fetchAll();
@@ -93,7 +93,7 @@ class ConvocatoriaModel
         $offset     = ($page - 1) * $perPage;
 
         $stmt = $this->pdo->prepare(
-            "SELECT c.slug, c.titulo, c.area, c.fecha_publicacion, c.estado, c.descripcion, c.publicado,
+            "SELECT c.uuid, c.slug, c.titulo, c.area, c.fecha_publicacion, c.estado, c.descripcion, c.publicado,
                     (SELECT COUNT(*) FROM convocatoria_archivos a WHERE a.convocatoria_id = c.id) AS archivos
                FROM convocatorias c WHERE {$whereSql}
               ORDER BY c.fecha_publicacion DESC, c.id DESC
@@ -128,10 +128,22 @@ class ConvocatoriaModel
         return $this->porSlugCond($slug, true);
     }
 
+    /** Una convocatoria publicada completa por UUID, o null. */
+    public function publicadaPorUuid(string $uuid): ?array
+    {
+        return $this->porUuidCond($uuid, true);
+    }
+
     /** Una convocatoria completa (publicada o no, con archivos) por slug, o null. */
     public function porSlug(string $slug): ?array
     {
         return $this->porSlugCond($slug, false);
+    }
+
+    /** Una convocatoria completa por UUID, o null. */
+    public function porUuid(string $uuid): ?array
+    {
+        return $this->porUuidCond($uuid, false);
     }
 
     private function porSlugCond(string $slug, bool $soloPublicada): ?array
@@ -151,6 +163,23 @@ class ConvocatoriaModel
         return $conv;
     }
 
+    private function porUuidCond(string $uuid, bool $soloPublicada): ?array
+    {
+        $sql = 'SELECT * FROM convocatorias WHERE (uuid = ? OR slug = ?)'
+            . ($soloPublicada ? ' AND publicado = 1' : '') . ' LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$uuid, $uuid]);
+        $row = $stmt->fetch();
+        if ($row === false) {
+            return null;
+        }
+
+        $conv          = $this->map($row);
+        $conv['files'] = $this->archivosDe((int) $row['id'], (string) $row['slug']);
+
+        return $conv;
+    }
+
     public function existeSlug(string $slug): bool
     {
         $stmt = $this->pdo->prepare('SELECT 1 FROM convocatorias WHERE slug = ? LIMIT 1');
@@ -159,10 +188,27 @@ class ConvocatoriaModel
         return $stmt->fetchColumn() !== false;
     }
 
+    public function existeUuid(string $uuid): bool
+    {
+        $stmt = $this->pdo->prepare('SELECT 1 FROM convocatorias WHERE uuid = ? LIMIT 1');
+        $stmt->execute([$uuid]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
     public function idPorSlug(string $slug): ?int
     {
         $stmt = $this->pdo->prepare('SELECT id FROM convocatorias WHERE slug = ? LIMIT 1');
         $stmt->execute([$slug]);
+        $id = $stmt->fetchColumn();
+
+        return $id === false ? null : (int) $id;
+    }
+
+    public function idPorUuid(string $uuid): ?int
+    {
+        $stmt = $this->pdo->prepare('SELECT id FROM convocatorias WHERE (uuid = ? OR slug = ?) LIMIT 1');
+        $stmt->execute([$uuid, $uuid]);
         $id = $stmt->fetchColumn();
 
         return $id === false ? null : (int) $id;
@@ -178,6 +224,15 @@ class ConvocatoriaModel
         return $estado === false ? null : (string) $estado;
     }
 
+    public function estadoPorUuid(string $uuid): ?string
+    {
+        $stmt = $this->pdo->prepare('SELECT estado FROM convocatorias WHERE (uuid = ? OR slug = ?) LIMIT 1');
+        $stmt->execute([$uuid, $uuid]);
+        $estado = $stmt->fetchColumn();
+
+        return $estado === false ? null : (string) $estado;
+    }
+
     // ── Escritura ─────────────────────────────────────────────────────
 
     /** Inserta una convocatoria. Devuelve el id nuevo. */
@@ -185,9 +240,9 @@ class ConvocatoriaModel
     {
         $stmt = $this->pdo->prepare(
             'INSERT INTO convocatorias
-                (slug, titulo, area, fecha_publicacion, estado, descripcion, cuerpo, publicado)
+                (uuid, slug, titulo, area, fecha_publicacion, estado, descripcion, cuerpo, publicado)
              VALUES
-                (:slug, :titulo, :area, :fecha_publicacion, :estado, :descripcion, :cuerpo, :publicado)'
+                (:uuid, :slug, :titulo, :area, :fecha_publicacion, :estado, :descripcion, :cuerpo, :publicado)'
         );
         $stmt->execute($c);
 
@@ -222,11 +277,44 @@ class ConvocatoriaModel
         return $this->existeSlug($slug);
     }
 
+    /** Actualiza una convocatoria por UUID. */
+    public function actualizarPorUuid(string $uuid, array $c): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE convocatorias SET
+                titulo = :titulo, area = :area, fecha_publicacion = :fecha_publicacion,
+                estado = :estado, descripcion = :descripcion, cuerpo = :cuerpo,
+                publicado = :publicado
+              WHERE uuid = :uuid OR slug = :slug'
+        );
+        $stmt->execute([
+            'titulo'            => $c['titulo'],
+            'area'              => $c['area'],
+            'fecha_publicacion' => $c['fecha_publicacion'],
+            'estado'            => $c['estado'],
+            'descripcion'       => $c['descripcion'],
+            'cuerpo'            => $c['cuerpo'],
+            'publicado'         => $c['publicado'],
+            'uuid'              => $uuid,
+            'slug'              => $uuid,
+        ]);
+
+        return $stmt->rowCount() > 0 || $this->existeUuid($uuid);
+    }
+
     /** Elimina una convocatoria (CASCADE borra sus archivos). true si borró. */
     public function eliminar(string $slug): bool
     {
         $stmt = $this->pdo->prepare('DELETE FROM convocatorias WHERE slug = ?');
         $stmt->execute([$slug]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function eliminarPorUuid(string $uuid): bool
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM convocatorias WHERE uuid = ? OR slug = ?');
+        $stmt->execute([$uuid, $uuid]);
 
         return $stmt->rowCount() > 0;
     }
@@ -262,6 +350,8 @@ class ConvocatoriaModel
     private function map(array $row): array
     {
         return [
+            'id'          => (int) ($row['id'] ?? 0),
+            'uuid'        => $row['uuid'] ?? '',
             'slug'        => $row['slug'],
             'title'       => $row['titulo'],
             'area'        => $row['area'],
@@ -277,6 +367,8 @@ class ConvocatoriaModel
     private function mapMeta(array $row): array
     {
         return [
+            'id'          => (int) ($row['id'] ?? 0),
+            'uuid'        => $row['uuid'] ?? '',
             'slug'        => $row['slug'],
             'title'       => $row['titulo'],
             'area'        => $row['area'],

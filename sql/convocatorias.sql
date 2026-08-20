@@ -7,6 +7,7 @@
 
 CREATE TABLE IF NOT EXISTS convocatorias (
   id                INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  uuid              CHAR(36)      NOT NULL,
   slug              VARCHAR(160)  NOT NULL,
   titulo            VARCHAR(200)  NOT NULL,
   area              VARCHAR(60)   NOT NULL,
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS convocatorias (
   actualizado_en    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
                                   ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
+  UNIQUE KEY uq_convocatorias_uuid (uuid),
   UNIQUE KEY uq_convocatorias_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
