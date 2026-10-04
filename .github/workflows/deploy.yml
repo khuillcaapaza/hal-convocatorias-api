@@ -59,11 +59,44 @@ jobs:
       - name: Instalar dependencias (producción)
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
+      - name: Crear .env para producción
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+        run: |
+          cat > .env << EOF
+          APP_DEBUG=false
+          APP_BASE_PATH=/api
+          APP_SECURE=true
+          AUTH_ENABLED=true
+          JWT_SECRET=${JWT_SECRET}
+          JWT_TTL=28800
+          AUTH_2FA_DEV=false
+          CORS_ORIGINS=https://hospitalantoniolorena.gob.pe,https://www.hospitalantoniolorena.gob.pe,https://convocatorias.hospitalantoniolorena.gob.pe
+          DB_HOST=${DB_HOST}
+          DB_NAME=${DB_NAME}
+          DB_USER=${DB_USER}
+          DB_PASS=${DB_PASS}
+          SMTP_HOST=mail.hospitalantoniolorena.gob.pe
+          SMTP_PORT=465
+          SMTP_SECURE=ssl
+          SMTP_USER=noresponder@hospitalantoniolorena.gob.pe
+          SMTP_PASS=${SMTP_PASS}
+          SMTP_FROM=noresponder@hospitalantoniolorena.gob.pe
+          SMTP_FROM_NAME="Sistema de Convocatorias - Hospital Antonio Lorena"
+          FILES_API_BASE_URL=https://archivos.hospitalantoniolorena.gob.pe/files-api
+          ARCHIVOS_BASE_URL=https://archivos.hospitalantoniolorena.gob.pe/convocatorias
+          EOF
+
       - name: Preparar artefacto (zip + extractor)
         run: |
           set -euo pipefail
           mkdir -p stage/api
-          cp -r src public vendor composer.json composer.lock sql scripts stage/api/
+          cp -r src public vendor composer.json composer.lock sql scripts .env stage/api/
           ( cd stage/api && zip -qr "$GITHUB_WORKSPACE/payload.zip" . )
           TOKEN="$(openssl rand -hex 16)"
           echo "::add-mask::$TOKEN"
