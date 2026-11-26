@@ -2,15 +2,16 @@
 
 declare(strict_types=1);
 
-use JimTools\JwtAuth\Decoder\FirebaseDecoder;
 use JimTools\JwtAuth\Exceptions\AuthorizationException;
 use JimTools\JwtAuth\Middleware\JwtAuthentication;
 use JimTools\JwtAuth\Options;
 use JimTools\JwtAuth\Rules\RequestMethodRule;
 use JimTools\JwtAuth\Rules\RequestPathRule;
-use JimTools\JwtAuth\Secret;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Support\JwtNoConfigurado;
+use App\Support\RequiereModulo;
+use App\Support\TokenDecoder;
 use Slim\App;
 use Tuupola\Middleware\CorsMiddleware;
 
@@ -96,13 +97,14 @@ return function (App $app): void {
         return $response;
     });
 
-    // Autenticación JWT (solo si está habilitada y hay secreto configurado).
-    // En local (AUTH_ENABLED=false) se omite para poder probar las rutas.
-    $authEnabled = filter_var($_ENV['AUTH_ENABLED'] ?? 'false', FILTER_VALIDATE_BOOL);
-    $jwtSecret   = $_ENV['JWT_SECRET'] ?? '';
+    // Autenticación JWT. Tokens de hal-auth-api: EdDSA con JWT_PUBLIC_KEYS (recomendado) y HS256
+    // con JWT_SECRET solo durante la transición (decisión 0002 de lbyte-contexto).
+    // Segura por defecto: para probar sin token en local pon AUTH_ENABLED=false en el .env.
+    $authEnabled = filter_var($_ENV['AUTH_ENABLED'] ?? 'true', FILTER_VALIDATE_BOOL);
 
-    if ($authEnabled && $jwtSecret !== '') {
-        $secure = filter_var($_ENV['APP_SECURE'] ?? 'true', FILTER_VALIDATE_BOOL);
+    if ($authEnabled) {
+        $secure  = filter_var($_ENV['APP_SECURE'] ?? 'true', FILTER_VALIDATE_BOOL);
+        $decoder = TokenDecoder::fromEnv();
 
         // Prefijo de la API ('/api' en producción, '' en local) para las reglas
         $base   = rtrim($_ENV['APP_BASE_PATH'] ?? '', '/');
@@ -111,35 +113,28 @@ return function (App $app): void {
             $base . '/health',
             $base . '/convocatorias',                     // lectura pública (GET)
         ];
+        $reglas = [
+            new RequestMethodRule(),                      // ignora OPTIONS (CORS)
+            new RequestPathRule($paths, $ignore),
+        ];
 
-        // Validación de módulo (defensa en profundidad): como todas las APIs
-        // comparten JWT_SECRET, un token de otro módulo tendría firma válida aquí.
-        // Se registra ANTES de JwtAuthentication para que, por el orden LIFO de
-        // Slim, se EJECUTE DESPUÉS (con los claims ya presentes en la request).
-        $app->add(function (Request $request, $handler) use ($app): Response {
-            $token = $request->getAttribute('token');
-            if (is_array($token) && isset($token['modulos'])) {
-                if (!in_array('convocatorias', (array) $token['modulos'], true)) {
-                    $resp = $app->getResponseFactory()->createResponse(403);
-                    $resp->getBody()->write(json_encode(['error' => 'Sin acceso al módulo de convocatorias']));
-                    return $resp->withHeader('Content-Type', 'application/json');
-                }
-            }
-            return $handler->handle($request);
-        });
-
-        $app->add(new JwtAuthentication(
-            new Options(isSecure: $secure),               // true = solo HTTPS
-            new FirebaseDecoder(new Secret($jwtSecret, 'HS256')),
-            [
-                new RequestMethodRule(),                  // ignora OPTIONS (CORS)
-                new RequestPathRule($paths, $ignore),
-            ]
-        ));
+        if (!$decoder->configured()) {
+            // Sin claves no se abre la API: las rutas protegidas responden 503.
+            $app->add(new JwtNoConfigurado($app->getResponseFactory(), $reglas));
+        } else {
+            // Módulo obligatorio: un token sin `modulos` o sin 'convocatorias' recibe 403.
+            // Se registra ANTES de JwtAuthentication para ejecutarse DESPUÉS (orden LIFO de Slim).
+            $app->add(new RequiereModulo($app->getResponseFactory(), 'convocatorias', 'Sin acceso al módulo de convocatorias'));
+            $app->add(new JwtAuthentication(
+                new Options(isSecure: $secure),           // true = solo HTTPS
+                $decoder,
+                $reglas
+            ));
+        }
     }
 
     // Manejo de errores. En producción APP_DEBUG=false => no filtrar stack traces.
-    $displayErrors   = filter_var($_ENV['APP_DEBUG'] ?? 'true', FILTER_VALIDATE_BOOL);
+    $displayErrors   = filter_var($_ENV['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOL);
     $errorMiddleware = $app->addErrorMiddleware($displayErrors, true, true);
 
     // Respuesta JSON 401 cuando la autenticación JWT falla
