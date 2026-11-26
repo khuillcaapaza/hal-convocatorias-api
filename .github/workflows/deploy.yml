@@ -62,17 +62,24 @@ jobs:
       - name: Crear .env para producción
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          # Clave(s) pública(s) Ed25519 de hal-auth-api (GET /jwks). Variable, no secreto.
+          JWT_PUBLIC_KEYS: ${{ vars.JWT_PUBLIC_KEYS }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASS: ${{ secrets.DB_PASS }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
         run: |
+          # Sin clave la API respondería 503 en /admin: mejor fallar aquí.
+          if [ -z "${JWT_PUBLIC_KEYS:-}" ] && [ -z "${JWT_SECRET:-}" ]; then
+            echo "::error::Configura JWT_PUBLIC_KEYS (o JWT_SECRET durante la transición)"; exit 1
+          fi
           cat > .env << EOF
           APP_DEBUG=false
           APP_BASE_PATH=/api
           APP_SECURE=true
           AUTH_ENABLED=true
+          JWT_PUBLIC_KEYS=${JWT_PUBLIC_KEYS}
           JWT_SECRET=${JWT_SECRET}
           JWT_TTL=28800
           AUTH_2FA_DEV=false
